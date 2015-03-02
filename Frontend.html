@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head><title>Stock Auto Completion System</title>
+<link rel="stylesheet"  href="style.css"/>
+<script src="http://yui.yahooapis.com/3.15.0/build/yui/yui-min.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7/jquery.min.js"></script>
+<script type="text/javascript">
+  function processReq(){
+    var text;
+    if(req.readyState == 4){
+      if(req.status == 200){
+        //process operation 
+        alert("Successfully retrived");
+        alert("req status:"+req.status);
+        alert("req ready state:"+req.readyState);
+        text = req.responseText;
+        alert(text);
+        
+        YUI().use('tabview',function(Y){
+        	var tabview = new Y.TabView({
+        		children:[
+        		{label:'foo', content: '<p>foo content</p>'},
+        		{label:'bar', content: '<p>bar content</p>'}
+        		
+        		
+        		]
+        	});
+        	tabview.render('#popups');
+        
+        });
+        
+        
+        
+      }else{
+        alert("There was a problem retrieving the XML data\n" + req.statusText);
+        alert("req status:"+req.status);
+        alert("req ready state:"+req.readyState);
+      }
+    }
+  }
+  
+  
+  function loadXML(){
+  	var input = document.forms["inputurl"]["url"].value;
+    alert("You Pressed Submit!");
+    var data_part = "goog";
+    var url = "http://localhost:8080/stockSearch/stockSearch?data=" + input;
+    alert(url);
+    
+    if(window.XMLHttpRequest){
+      try{req=new XMLHttpRequest;}catch(e){req = false;}
+    }else{
+      try{
+        req = new ActiveXObject("Msxm12.XMLHTTP");
+      }catch(e){
+        try{req=new ActiveXObject("Microsoft.XMLHTTP");}catch(e){req = false;}
+      }
+    }
+    if(req){
+      req.onreadystatechange = processReq;
+      req.open("GET",url,false);
+      req.send();
+    }
+    
+
+  }
+  
+
+</script>
+</head>
+
+
+<body class="yui3-skin-sam">
+<form name="inputurl" onsubmit="loadXML()">Please Enter Company Name<br>
+<input type="text" id="searchfield" name="url"><input type="submit" value="Submit"><br>
+</form>
+<div id="popups"></div>
+
+<script type="text/javascript">
+
+	
+	
+	
+        
+
+
+
+
+  
+  var YAHOO = {
+    Finance: {
+      SymbolSuggest:{}
+    }
+  };
+  // Create a new YUI instance and populate it with the required modules.
+  YUI().use('autocomplete','autocomplete-highlighters',function (Y) {
+      
+      //Y.one('body').addClass('yui3-skin-sam');
+      Y.one('#searchfield').plug(Y.Plugin.AutoComplete, {
+        resultHighlighter: 'phraseMatch',
+        
+        
+        source: function(request,response){
+          
+          $.ajax({
+            type:"GET",
+            url:"http://autoc.finance.yahoo.com/autoc",
+            data:{query:request},
+            dataType:"jsonp",
+            jsonp:"callback",
+            jsonpCallback:"YAHOO.Finance.SymbolSuggest.ssCallback",
+          });
+          //alert("good");
+          //call back function
+          //var QueryStr = "http://autoc.finance.yahoo.com/autoc?query='"+document.getElementById("searchfield").value+"'&callback=YAHOO.Finance.SymbolSuggest.ssCallback";
+          YAHOO.Finance.SymbolSuggest.ssCallback = function(data){
+            var suggestions = [];
+            $.each(data.ResultSet.Result,function(i,val){
+              suggestions.push(val.symbol+"  "+val.name+"  "+val.exch);
+            });
+            //alert(suggestions);
+            response(suggestions);
+          } 
+        }
+       
+     });
+
+  });
+  
+</script>
+
+
+
+
+</body>
+</html>
